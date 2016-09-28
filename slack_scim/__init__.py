@@ -365,24 +365,23 @@ class SlackSCIM(BaseAPI):
             self._get(SLACK_USER_ID_ENDPOINT % str(user_id)).content,
             self)
 
-    def get_users(self, per_page=10, start_index=0):
+    def get_users(self, per_page=10, start_index=1):
         users = []
         while True:
             response = json.loads(
                 self._get(SLACK_USERS_ENDPOINT,
-                          params={'startIndex': int(start_index) + 1,
+                          params={'startIndex': start_index,
                                   'count': per_page
                                   }).content)
-            per_page = response['itemsPerPage']
-            start_index = response['startIndex']
-            total = response['totalResults']
 
             users.extend(
                 [User(user, self) for user in response['Resources']]
             )
 
-            if per_page * start_index >= total:
+            start_page += per_page
+            if start_page > response['totalResults']:
                 break
+
         self.users = users
         return self.users
 
@@ -435,18 +434,16 @@ class SlackSCIM(BaseAPI):
         while True:
             response = json.loads(
                 self._get(SLACK_GROUPS_ENDPOINT,
-                          params={'startIndex': int(start_index) + 1,
+                          params={'startIndex': start_index,
                                   'count': per_page
                                   }).content)
-            per_page = response['itemsPerPage']
-            start_index = response['startIndex']
-            total = response['totalResults']
 
             groups.extend(
                 [Group(group, self) for group in response['Resources']]
             )
 
-            if per_page * start_index >= total:
+            start_index += per_page
+            if start_index > response['totalResults']:
                 break
 
         self.groups = groups
